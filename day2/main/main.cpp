@@ -5,32 +5,26 @@
 #include <set>
 #include <array>
 
-int wins{0}, losses{0}, draws{0};
-
-std::array<std::string, 3> signs {"Rock", "Paper", "Scissor"};
-
 const std::string filepath {"/home/lukas/prog/AdventOfCode22/day2/main/input"};
 
-int CalcOutcome(char opponent, char player) {
-  int res{0};
-  int player_num{static_cast<int>(player) - 87};
-  int opponent_num{static_cast<int>(opponent) - 64};
-  res = player_num;
-  int game{opponent_num - player_num};
-  std::set<int> winning{2,-1,};
-  std::set<int> losing{-2,1};
-  if (winning.find(game) != winning.end()){
-    res += 6;
-    wins++;
-  }
-  else if (losing.find(game) != losing.end()){
-    losses++;
-  }
-  else if(game == 0){
-    res += 3;
-    draws++;
-  }
+std::array<std::string, 3> outcomes {"loss", "draw", "win"};
+std::array<std::string, 3> signs {"Rock", "Paper", "Scissors"};
 
+int CalcOutcome(char opponent, char outcome) {
+  int res{0};
+  int outcome_num{static_cast<int>(outcome) - 88};
+  int opponent_num{static_cast<int>(opponent) - 65};
+  res = outcome_num*3;
+  if(outcome_num == 1)
+    res += opponent_num+1;
+  else if(outcome_num == 0){
+    if(opponent_num == 0)
+      res += 3;
+    else
+      res += ((opponent_num - 1)%3)+1;
+  }
+   else if(outcome_num == 2)
+      res += ((opponent_num + 1)%3)+1;
   return res;
 }
 
@@ -38,13 +32,13 @@ int main(){
 
   std::ifstream fs{filepath};
   int res{0};
-  char players_choice, opponents_choice;
+  char opponents_choice, desired_outcome;
 
-  while(fs >> opponents_choice >> players_choice) {
-   res += CalcOutcome(opponents_choice, players_choice);
+  while(fs >> opponents_choice >> desired_outcome) {
+   res += CalcOutcome(opponents_choice, desired_outcome);
   }
   
-  std::cout << "Result: "  << res << ". Wins: " << wins << ", losses: " << losses << ", draws: " << draws << ", sum: " << wins+losses+draws << std::endl;
+  std::cout << "Result: "  << res << std::endl;
 
   return 0;
 }
