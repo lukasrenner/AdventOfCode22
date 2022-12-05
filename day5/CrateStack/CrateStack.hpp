@@ -17,7 +17,8 @@ public:
   CrateList RemoveCrates(size_t n) {
     CrateList tmp;
     for (size_t i = 0; i < n; ++i) {
-      tmp.push_front(crates_.front());
+      tmp.push_back(
+          crates_.front()); // Change to push_front for part 1 of day 5!
       crates_.pop_front();
     }
 
