@@ -64,6 +64,9 @@
         "typeinfo": "cpp",
         "variant": "cpp",
         "bitset": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "hash_map": "cpp",
+        "forward_list": "cpp",
+        "unordered_set": "cpp"
     }
 }
