@@ -29,8 +29,8 @@ int main() {
       char_map.insert(std::make_pair(input, 1));
     }
     // remove current char - 4
-    if (count > 4) {
-      char rem_char = *(line.end() - 5);
+    if (count > 14) {                     // change to 4 for part 1
+      char rem_char = *(line.end() - 15); // change to 5 for part 1
       auto rem_it = char_map.find(rem_char);
 
       if (rem_it->second == 1) {
