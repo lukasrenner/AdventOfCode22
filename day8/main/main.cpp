@@ -7,91 +7,109 @@
 
 const std::string filepath{"/home/lukas/prog/AdventOfCode22/day8/main/input"};
 
-using TreeLine = std::vector<std::pair<int, bool>>;
+using TreeLine = std::vector<int>;
+using TreeMap = std::vector<TreeLine>;
 
-int CheckLineLeft(TreeLine &line) {
-  int res{0}; // start at 1 for the leftmost tree
-  if (line[0].second == false) {
-    line[0].second = true;
-    ++res;
-  }
-  int max_height{line[0].first};
-  for (size_t i = 1; i < line.size() - 1;
-       ++i) { // -1 so we dont check the rightmost tree twice
-    if (line[i].first > max_height) {
-      max_height = line[i].first;
-      if (line[i].second == false) {
-        ++res;
-        line[i].second = true;
-      }
+int ViewDistLeft(TreeMap &map, int pos_x, int pos_y) {
+  if (pos_x == 0)
+    return 0;
+  else {
+    int res{0};
+    int current_height{map[pos_y][pos_x]};
+
+    for (int i = pos_x - 1; i >= 0; --i) {
+      ++res;
+      if (map[pos_y][i] >= current_height)
+        break;
     }
-    // std::cout << "maxheight: " << max_height << std::endl;
+    return res;
   }
-  // std::cout << "Found " << res << " hits" << std::endl;
+}
+
+int ViewDistRight(TreeMap &map, int pos_x, int pos_y) {
+  if (pos_x == map[pos_y].size() - 1)
+    return 0;
+  else {
+    int res{0};
+    int current_height{map[pos_y][pos_x]};
+    for (int i = pos_x + 1; i < map[pos_y].size(); ++i) {
+      ++res;
+      if (map[pos_y][i] >= current_height)
+        break;
+    }
+    return res;
+  }
+}
+
+int ViewDistUp(TreeMap &map, int pos_x, int pos_y) {
+  if (pos_y == 0)
+    return 0;
+  else {
+    int res{0};
+    int current_height{map[pos_y][pos_x]};
+
+    for (int i = pos_y - 1; i >= 0; --i) {
+      ++res;
+      if (map[i][pos_x] >= current_height)
+        break;
+    }
+    return res;
+  }
+}
+
+int ViewDistDown(TreeMap &map, int pos_x, int pos_y) {
+  if (pos_y == map.size() - 1)
+    return 0;
+  else {
+    int res{0};
+    int current_height{map[pos_y][pos_x]};
+
+    for (int i = pos_y + 1; i < map.size(); ++i) {
+      ++res;
+      if (map[i][pos_x] >= current_height)
+        break;
+    }
+    return res;
+  }
+}
+
+int ScenicScore(TreeMap &map, int pos_x, int pos_y) {
+  int res{1};
+  res *= ViewDistLeft(map, pos_x, pos_y);
+  res *= ViewDistRight(map, pos_x, pos_y);
+  res *= ViewDistUp(map, pos_x, pos_y);
+  res *= ViewDistDown(map, pos_x, pos_y);
   return res;
 }
 
 TreeLine StrToTreeLine(std::string str) {
   TreeLine tl;
   for (auto c : str) {
-    tl.push_back(std::make_pair(c - 48, false));
+    tl.push_back(c - 48);
   }
   return tl;
-}
-
-int CheckLineRight(TreeLine &line) {
-  std::reverse(line.begin(), line.end());
-  return CheckLineLeft(line);
-}
-
-void PrintMap(std::vector<TreeLine> &map) {
-  for (auto tl : map) {
-    for (auto t : tl) {
-      if (t.second)
-        std::cout << "X";
-      else
-        std::cout << t.first;
-    }
-    std::cout << std::endl;
-  }
 }
 
 int main() {
 
   std::ifstream fs{filepath};
   std::string line;
-  std::vector<TreeLine> map;
+  TreeMap map;
   int res{0};
 
   while (fs >> line) {
-    // std::cout << line << std::endl;
     auto tl = StrToTreeLine(line);
-    res += CheckLineLeft(tl);
-    res += CheckLineRight(tl);
     map.push_back(tl);
   }
 
-  // make and check vertical lines
-  for (size_t x = 1; x < map[0].size() - 1;
-       ++x) { // avoid left-most and right-most treelines, they are all visible
-              // and considered in the first part
-    TreeLine tl;
-    for (size_t y = 0; y < map.size(); ++y) {
-      tl.push_back(std::make_pair(map[y][x].first, map[y][x].second));
+  for (int y = 0; y < map.size(); ++y) {
+    for (int x = 0; x < map[y].size(); ++x) {
+      int tmp_res = ScenicScore(map, x, y);
+      if (tmp_res > res)
+        res = tmp_res;
     }
-
-    res += CheckLineLeft(tl);
-    res += CheckLineRight(tl);
-
-    // for (auto t : tl) {
-    //   if (t.second)
-    //     std::cout << "X";
-    //   else
-    //     std::cout << t.first;
-    // }
-    // std::cout << std::endl;
   }
-  // PrintMap(map);
+
   std::cout << "Result: " << res << std::endl;
 
   return 0;
