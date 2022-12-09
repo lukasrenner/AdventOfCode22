@@ -1,17 +1,27 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <set>
 #include <sstream>
 #include <string>
+#include <vector>
 
 const std::string filepath{"/home/lukas/prog/AdventOfCode22/day9/main/input"};
 
 using PositionSet = std::set<std::pair<int, int>>;
 
+constexpr int kNumKnots{10};
+
 struct Point {
+  Point() : pos_x{0}, pos_y{0} {}
+  Point(int x, int y) : pos_x{x}, pos_y{y} {}
   int pos_x{0};
   int pos_y{0};
+
+  bool operator<(const Point &rhs) const {
+    return ((pos_x < rhs.pos_x) || (pos_y < rhs.pos_y));
+  }
 };
 
 bool IsAdjacentOrSame(const Point &p1, const Point &p2) {
@@ -20,7 +30,7 @@ bool IsAdjacentOrSame(const Point &p1, const Point &p2) {
   return ((std::abs(diff_x) <= 1) && (std::abs(diff_y) <= 1));
 }
 
-void UpdateTail(Point &head, Point &tail, PositionSet &positions_visited) {
+void UpdateTail(Point &head, Point &tail) {
 
   if (IsAdjacentOrSame(head, tail))
     return;
@@ -29,18 +39,18 @@ void UpdateTail(Point &head, Point &tail, PositionSet &positions_visited) {
     int diff_y = head.pos_y - tail.pos_y;
     // move right
     if (diff_x > 0 && diff_y == 0) {
-      ++tail.pos_x;
+      ++(tail.pos_x);
     }
     // move up right
     else if (diff_x > 0 && diff_y > 0) {
       ++tail.pos_x;
       ++tail.pos_y;
     }
-    // move up
+    // // move up
     else if (diff_x == 0 && diff_y > 0) {
       ++tail.pos_y;
     }
-    // move up left
+    // // move up left
     else if (diff_x < 0 && diff_y > 0) {
       --tail.pos_x;
       ++tail.pos_y;
@@ -64,46 +74,93 @@ void UpdateTail(Point &head, Point &tail, PositionSet &positions_visited) {
       --tail.pos_y;
     }
   }
-  positions_visited.insert(std::make_pair(tail.pos_x, tail.pos_y));
 }
 
-void MakeMoves(Point &head, Point &tail, char dir, int num_steps,
-               PositionSet &positions_visited) {
-  for (int i = 0; i < num_steps; ++i) {
-    switch (dir) {
-    case 'U':
-      ++head.pos_y;
-      // std::cout << "Moving head up" << std::endl;
-      break;
-    case 'D':
-      --head.pos_y;
-      break;
-    case 'L':
-      --head.pos_x;
-      break;
-    case 'R':
-      ++head.pos_x;
-      break;
-    }
-    UpdateTail(head, tail, positions_visited);
+struct Rope {
+  PositionSet positions_visited;
+  std::vector<Point> knots;
+  Rope() {
+    knots.resize(kNumKnots);
+    positions_visited.insert(std::make_pair(0, 0));
   }
-}
+
+  PositionSet GetPosVisited() { return positions_visited; }
+
+  void Move(char dir, int num_steps) {
+    for (int i = 0; i < num_steps; ++i) {
+      switch (dir) {
+      case 'U':
+        ++knots[0].pos_y;
+        break;
+      case 'D':
+        --knots[0].pos_y;
+        break;
+      case 'L':
+        --knots[0].pos_x;
+        break;
+      case 'R':
+        ++knots[0].pos_x;
+        break;
+      }
+      for (int i = 0; i < kNumKnots - 1; ++i) {
+        UpdateTail(knots[i], knots[i + 1]);
+      }
+      positions_visited.insert(std::make_pair(knots[kNumKnots - 2].pos_x,
+                                              knots[kNumKnots - 2].pos_y));
+    }
+  }
+
+  void Print() {
+    std::map<Point, char> knot_map;
+    char c{'0'};
+    for (auto k : knots) {
+      knot_map.insert(std::make_pair(k, c));
+      c++;
+    }
+
+    int max_x{0};
+    int min_x{0};
+    int max_y{0};
+    int min_y{0};
+    for (auto &k : knots) {
+      // std::cout << "X: " << k.pos_x << "  Y: " << k.pos_y << std::endl;
+      if (k.pos_x < min_x)
+        min_x = k.pos_x;
+      else if (k.pos_x > max_x)
+        max_x = k.pos_x;
+      if (k.pos_y < min_y)
+        min_y = k.pos_y;
+      else if (k.pos_y > max_y)
+        max_y = k.pos_y;
+    }
+    std::cout << "MAx X: " << max_x << "  MAX Y: " << max_y << std::endl;
+    for (int y = min_y - 2; y < max_y + 2; ++y) {
+      for (int x = min_x - 2; x < max_x + 2; ++x) {
+        auto itr = knot_map.find(Point(x, y));
+        if (itr == knot_map.end())
+          std::cout << '.';
+        else
+          std::cout << itr->second;
+      }
+      std::cout << std::endl;
+    }
+    std::cout << std::endl;
+  }
+};
 
 int main() {
 
   std::ifstream fs{filepath};
-  PositionSet positions_visited;
-  Point head, tail;
+  Rope rope;
   char dir;
   int num_steps;
 
-  positions_visited.insert(std::make_pair(0, 0));
-
   while (fs >> dir >> num_steps) {
-    MakeMoves(head, tail, dir, num_steps, positions_visited);
+    rope.Move(dir, num_steps);
+    rope.Print();
   }
 
-  std::cout << "Result: " << positions_visited.size() << std::endl;
+  std::cout << "Result: " << rope.GetPosVisited().size() << std::endl;
 
   return 0;
 }
