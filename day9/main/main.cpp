@@ -78,7 +78,12 @@ void UpdateTail(Point &head, Point &tail) {
 
 struct Rope {
   PositionSet positions_visited;
+  std::map<Point, char> tail_visited_map;
   std::vector<Point> knots;
+  int max_x{0};
+  int min_x{0};
+  int max_y{0};
+  int min_y{0};
   Rope() {
     knots.resize(kNumKnots);
     positions_visited.insert(std::make_pair(0, 0));
@@ -91,37 +96,36 @@ struct Rope {
       switch (dir) {
       case 'U':
         ++knots[0].pos_y;
+        std::cout << "Move up" << std::endl;
         break;
       case 'D':
         --knots[0].pos_y;
+        std::cout << "Move down" << std::endl;
         break;
       case 'L':
         --knots[0].pos_x;
+        std::cout << "Move left" << std::endl;
         break;
       case 'R':
         ++knots[0].pos_x;
+        std::cout << "Move right" << std::endl;
         break;
       }
+      Print();
       for (int i = 0; i < kNumKnots - 1; ++i) {
         UpdateTail(knots[i], knots[i + 1]);
+        UpdateFieldOfView();
       }
+      Print();
       positions_visited.insert(std::make_pair(knots[kNumKnots - 2].pos_x,
                                               knots[kNumKnots - 2].pos_y));
+      tail_visited_map.insert(std::make_pair(knots[kNumKnots - 2], '#'));
+      std::cout << "X: " << knots[kNumKnots - 2].pos_x
+                << "  Y: " << knots[kNumKnots - 2].pos_y << std::endl;
     }
   }
 
-  void Print() {
-    std::map<Point, char> knot_map;
-    char c{'0'};
-    for (auto k : knots) {
-      knot_map.insert(std::make_pair(k, c));
-      c++;
-    }
-
-    int max_x{0};
-    int min_x{0};
-    int max_y{0};
-    int min_y{0};
+  void UpdateFieldOfView() {
     for (auto &k : knots) {
       // std::cout << "X: " << k.pos_x << "  Y: " << k.pos_y << std::endl;
       if (k.pos_x < min_x)
@@ -133,13 +137,33 @@ struct Rope {
       else if (k.pos_y > max_y)
         max_y = k.pos_y;
     }
-    std::cout << "MAx X: " << max_x << "  MAX Y: " << max_y << std::endl;
-    for (int y = min_y - 2; y < max_y + 2; ++y) {
+  }
+
+  void Print() {
+    std::map<Point, char> knot_map;
+
+    char c{'0'};
+    for (auto k : knots) {
+      knot_map.insert(std::make_pair(k, c));
+      c++;
+    }
+
+    for (int y = max_y + 2; y > min_y - 2; --y) {
       for (int x = min_x - 2; x < max_x + 2; ++x) {
         auto itr = knot_map.find(Point(x, y));
-        if (itr == knot_map.end())
-          std::cout << '.';
-        else
+        auto itr2 = tail_visited_map.find(Point(x, y));
+        if (x == 0 && y == 0) {
+          std::cout << 's';
+          continue;
+        }
+
+        if (itr == knot_map.end()) {
+          if (itr2 == tail_visited_map.end()) {
+            std::cout << '.';
+          } else {
+            std::cout << 'X';
+          }
+        } else
           std::cout << itr->second;
       }
       std::cout << std::endl;
@@ -157,7 +181,7 @@ int main() {
 
   while (fs >> dir >> num_steps) {
     rope.Move(dir, num_steps);
-    rope.Print();
+    // rope.Print();
   }
 
   std::cout << "Result: " << rope.GetPosVisited().size() << std::endl;
