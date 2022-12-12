@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-const std::string filepath{"/home/lukas/prog/AdventOfCode22/day9/main/input"};
+const std::string filepath{"/home/lukas/AdventOfCode22/day9/main/input"};
 
 using PositionSet = std::set<std::pair<int, int>>;
 
@@ -19,9 +19,9 @@ struct Point {
   int pos_x{0};
   int pos_y{0};
 
-  bool operator<(const Point &rhs) const {
-    return ((pos_x < rhs.pos_x) || (pos_y < rhs.pos_y));
-  }
+  // bool operator<(const Point &rhs) const {
+  //   return ((pos_x < rhs.pos_x) || (pos_y < rhs.pos_y));
+  // }
 };
 
 bool IsAdjacentOrSame(const Point &p1, const Point &p2) {
@@ -92,42 +92,36 @@ struct Rope {
   PositionSet GetPosVisited() { return positions_visited; }
 
   void Move(char dir, int num_steps) {
+
     for (int i = 0; i < num_steps; ++i) {
       switch (dir) {
       case 'U':
         ++knots[0].pos_y;
-        std::cout << "Move up" << std::endl;
         break;
       case 'D':
         --knots[0].pos_y;
-        std::cout << "Move down" << std::endl;
         break;
       case 'L':
         --knots[0].pos_x;
-        std::cout << "Move left" << std::endl;
         break;
       case 'R':
         ++knots[0].pos_x;
-        std::cout << "Move right" << std::endl;
         break;
       }
-      Print();
+
       for (int i = 0; i < kNumKnots - 1; ++i) {
         UpdateTail(knots[i], knots[i + 1]);
         UpdateFieldOfView();
       }
-      Print();
-      positions_visited.insert(std::make_pair(knots[kNumKnots - 2].pos_x,
-                                              knots[kNumKnots - 2].pos_y));
-      tail_visited_map.insert(std::make_pair(knots[kNumKnots - 2], '#'));
-      std::cout << "X: " << knots[kNumKnots - 2].pos_x
-                << "  Y: " << knots[kNumKnots - 2].pos_y << std::endl;
+
+      positions_visited.insert(std::make_pair(knots[kNumKnots - 1].pos_x,
+                                              knots[kNumKnots - 1].pos_y));
     }
+    Print();
   }
 
   void UpdateFieldOfView() {
     for (auto &k : knots) {
-      // std::cout << "X: " << k.pos_x << "  Y: " << k.pos_y << std::endl;
       if (k.pos_x < min_x)
         min_x = k.pos_x;
       else if (k.pos_x > max_x)
@@ -140,31 +134,59 @@ struct Rope {
   }
 
   void Print() {
-    std::map<Point, char> knot_map;
-
-    char c{'0'};
-    for (auto k : knots) {
-      knot_map.insert(std::make_pair(k, c));
-      c++;
-    }
 
     for (int y = max_y + 2; y > min_y - 2; --y) {
       for (int x = min_x - 2; x < max_x + 2; ++x) {
-        auto itr = knot_map.find(Point(x, y));
-        auto itr2 = tail_visited_map.find(Point(x, y));
         if (x == 0 && y == 0) {
           std::cout << 's';
           continue;
         }
-
-        if (itr == knot_map.end()) {
-          if (itr2 == tail_visited_map.end()) {
-            std::cout << '.';
-          } else {
-            std::cout << 'X';
+        bool found(false);
+        int count{0};
+        for (int i = 0; i < kNumKnots; ++i) {
+          // if (positions_visited.find(std::make_pair(x, y)) !=
+          //     positions_visited.end()) {
+          //   std::cout << 'X';
+          //   found = true;
+          //   break;
+          // }
+          if ((knots[i].pos_x == x) && (knots[i].pos_y == y)) {
+            std::cout << count;
+            found = true;
+            break;
           }
-        } else
-          std::cout << itr->second;
+          ++count;
+        }
+        if (!found) {
+          std::cout << '.';
+        }
+      }
+      std::cout << std::endl;
+    }
+    std::cout << std::endl;
+  }
+
+  void PrintTail() {
+
+    for (int y = max_y + 2; y > min_y - 2; --y) {
+      for (int x = min_x - 2; x < max_x + 2; ++x) {
+        if (x == 0 && y == 0) {
+          std::cout << 's';
+          continue;
+        }
+        bool found(false);
+
+        for (int i = 0; i < kNumKnots; ++i) {
+          if (positions_visited.find(std::make_pair(x, y)) !=
+              positions_visited.end()) {
+            std::cout << 'X';
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          std::cout << '.';
+        }
       }
       std::cout << std::endl;
     }
@@ -178,12 +200,10 @@ int main() {
   Rope rope;
   char dir;
   int num_steps;
-
   while (fs >> dir >> num_steps) {
     rope.Move(dir, num_steps);
-    // rope.Print();
   }
-
+  rope.PrintTail();
   std::cout << "Result: " << rope.GetPosVisited().size() << std::endl;
 
   return 0;
